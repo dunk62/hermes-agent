@@ -204,6 +204,20 @@ def _redirect_cache(tmp_path, monkeypatch):
     )
 
 
+def test_slack_source_carries_triggering_message_timestamp(adapter):
+    event = {
+        "text": "approve",
+        "user": "U123",
+        "channel": "D123",
+        "channel_type": "im",
+        "ts": "1723900001.000001",
+    }
+
+    asyncio.run(adapter._handle_slack_message(event))
+
+    assert adapter.handle_message.await_args.args[0].source.message_id == event["ts"]
+
+
 class TestBotEventDiagnostics:
     """#30091 — surface upstream filters that drop bot events."""
 
@@ -3004,6 +3018,7 @@ class TestAssistantThreadLifecycle:
         runner = object.__new__(GatewayRunner)
         assert runner._thread_metadata_for_source(msg_event.source) == {
             "thread_id": "171.111",
+            "message_id": "171.111",
             "slack_team_id": "T_OTHER",
             # R3-5: per-turn egress identity stamped from THIS turn's source
             # (not the relay adapter's mutable per-chat cache) so concurrent

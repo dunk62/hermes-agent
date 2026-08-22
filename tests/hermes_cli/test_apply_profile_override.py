@@ -21,11 +21,7 @@ def _run_apply_profile_override(
     tmp_path, monkeypatch, *, hermes_home: str | None, active_profile: str | None,
     argv: list[str] | None = None,
 ):
-    """Run _apply_profile_override in isolation.
-
-    Returns the value of os.environ["HERMES_HOME"] after the call,
-    or None if unset.
-    """
+    """Run _apply_profile_override in isolation and return profile signals."""
     hermes_root = tmp_path / ".hermes"
     hermes_root.mkdir(parents=True, exist_ok=True)
 
@@ -163,4 +159,22 @@ class TestSupervisedChildIgnoresStickyProfile:
         result = os.environ.get("HERMES_HOME")
         assert result is not None
         assert result.endswith("coder")
+
+
+class TestProfileIdentitySignals:
+    def test_explicit_profile_sets_matching_identity_signals(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("HERMES_PROFILE", "elonmusk")
+        monkeypatch.delenv("HERMES_PROFILE_NAME", raising=False)
+
+        result = _run_apply_profile_override(
+            tmp_path,
+            monkeypatch,
+            hermes_home=None,
+            active_profile="billgates",
+            argv=["hermes", "--profile", "billgates", "chat"],
+        )
+
+        assert result is not None and result.endswith("billgates")
+        assert os.environ["HERMES_PROFILE"] == "billgates"
+        assert os.environ["HERMES_PROFILE_NAME"] == "billgates"
 

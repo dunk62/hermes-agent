@@ -636,6 +636,9 @@ def _apply_profile_override() -> None:
     hermes_home_env = os.environ.get("HERMES_HOME", "")
     if profile_name is None and hermes_home_env:
         if Path(hermes_home_env).parent.name == "profiles":
+            profile_name = Path(hermes_home_env).name
+            os.environ["HERMES_PROFILE"] = profile_name
+            os.environ["HERMES_PROFILE_NAME"] = profile_name
             return
 
     # 2. If no flag, check active_profile in the hermes root.
@@ -685,6 +688,8 @@ def _apply_profile_override() -> None:
             )
             return
         os.environ["HERMES_HOME"] = hermes_home
+        os.environ["HERMES_PROFILE"] = profile_name
+        os.environ["HERMES_PROFILE_NAME"] = profile_name
         # Strip the flag from argv so argparse doesn't choke
         if consume > 0 and profile_index is not None:
             start = profile_index + 1  # +1 because argv is sys.argv[1:]
